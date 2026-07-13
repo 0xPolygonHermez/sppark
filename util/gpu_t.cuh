@@ -1,6 +1,9 @@
 // Copyright Supranational LLC
 // Licensed under the Apache License, Version 2.0, see LICENSE for details.
 // SPDX-License-Identifier: Apache-2.0
+//
+// Modified 2026 by Roger Taule: added an adopting stream_t(cudaStream_t, int) constructor
+// (non-owning) so sppark work can run on a caller-provided stream without creating a private one.
 
 #ifndef __SPPARK_UTIL_GPU_T_CUH__
 #define __SPPARK_UTIL_GPU_T_CUH__
@@ -57,11 +60,15 @@ struct launch_params_t {
 class stream_t {
     cudaStream_t stream;
     const int gpu_id;
+    const bool owned;
 public:
-    stream_t(int id) : gpu_id(id)
+    stream_t(int id) : gpu_id(id), owned(true)
     {   CUDA_OK(cudaStreamCreateWithFlags(&stream, cudaStreamNonBlocking));   }
+    // Adopt an existing stream: run sppark work directly on the caller's stream (no
+    // private stream, no event handoff). The adopted stream is NOT destroyed here.
+    stream_t(cudaStream_t existing, int id) : stream(existing), gpu_id(id), owned(false) {}
     ~stream_t()
-    {   (void)cudaStreamDestroy(stream);   }
+    {   if (owned) (void)cudaStreamDestroy(stream);   }
     inline operator decltype(stream)() const    { return stream; }
     inline int id() const                       { return gpu_id; }
     inline operator int() const                 { return gpu_id; }

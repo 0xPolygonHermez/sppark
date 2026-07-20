@@ -3,7 +3,8 @@
 // SPDX-License-Identifier: Apache-2.0
 //
 // Modified 2026 by Roger Taule: added an adopting stream_t(cudaStream_t, int) constructor
-// (non-owning) so sppark work can run on a caller-provided stream without creating a private one.
+// (non-owning) so sppark work can run on a caller-provided stream without creating a private one;
+// and declared sppark_set_visible_devices() to scope the GPU registry to a device allow-list.
 
 #ifndef __SPPARK_UTIL_GPU_T_CUH__
 #define __SPPARK_UTIL_GPU_T_CUH__
@@ -25,6 +26,10 @@ size_t ngpus();
 const gpu_t& select_gpu(int id = 0);
 const cudaDeviceProp& gpu_props(int id = 0);
 const std::vector<const gpu_t*>& all_gpus();
+
+// Restrict the GPU registry to these CUDA ordinals; empty => all devices.
+// Must be called before the first select_gpu/ngpus/all_gpus/gpu_props.
+extern "C" void sppark_set_visible_devices(const int* ordinals, int n);
 
 class event_t {
     cudaEvent_t event;

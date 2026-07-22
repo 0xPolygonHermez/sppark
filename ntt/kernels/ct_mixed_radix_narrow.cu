@@ -167,6 +167,7 @@ void _CT_NTT(const unsigned int radix, const unsigned int lg_domain_size,
     idx1 = (idx1 & ~mask) | (rotw & mask);
 
     if (coalesced) {
+        __syncthreads();
         transpose<z_count>(r[0]);
         __syncwarp();
         transpose<z_count>(r[1]);
